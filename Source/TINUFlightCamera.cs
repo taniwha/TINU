@@ -37,13 +37,15 @@ public class TINUFlightCamera : FlightCamera
 			initialVector.x /= Screen.width / 2;
 			initialVector.y /= Screen.height / 2;
 			initialVector.z = -1;
+			initialVector = transform.TransformDirection (initialVector);
 		}
 		setRotation = false;
 		if (Input.GetMouseButton (cameraButton)) {
 			float deltaMx = Input.GetAxis ("Mouse X");
 			float deltaMy = Input.GetAxis ("Mouse Y");
 			var delta = new Vector3 (deltaMx, deltaMy, 0);
-			Vector3 newVector = initialVector + delta;
+			delta = transform.TransformDirection (delta);
+			Vector3 newVector = initialVector - delta;
 			deltaRotation = Quaternion.FromToRotation (initialVector, newVector);
 			setRotation = true;
 		}
@@ -60,6 +62,8 @@ public class TINUFlightCamera : FlightCamera
 		base.LateUpdate ();
 		if (setRotation) {
 			cameraPivot.rotation = deltaRotation * pivotRotation;
+		} else {
+			cameraPivot.rotation = pivotRotation;
 		}
 	}
 }
