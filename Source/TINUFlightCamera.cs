@@ -25,30 +25,27 @@ public class TINUFlightCamera : FlightCamera
 		base.OnDestroy ();
 	}
 
-	Vector3 initialVector;
 	Quaternion deltaRotation;
 	bool setRotation;
 
 	void HandleInput ()
 	{
-		if (Input.GetMouseButtonDown (cameraButton)) {
-			var center = new Vector3 (Screen.width / 2, Screen.height / 2, 0);
-			initialVector = Input.mousePosition - center;
-			initialVector.x /= Screen.width / 2;
-			initialVector.y /= Screen.height / 2;
-			initialVector.z = -1;
-			initialVector = transform.TransformDirection (initialVector);
-		}
 		setRotation = false;
-		if (Input.GetMouseButton (cameraButton)) {
-			float deltaMx = Input.GetAxis ("Mouse X");
-			float deltaMy = Input.GetAxis ("Mouse Y");
-			var delta = new Vector3 (deltaMx, deltaMy, 0);
-			delta = transform.TransformDirection (delta);
-			Vector3 newVector = initialVector - delta;
-			deltaRotation = Quaternion.FromToRotation (initialVector, newVector);
-			setRotation = true;
+		if (!Input.GetMouseButton (cameraButton)) {
+			return;
 		}
+		var center = new Vector3 (Screen.width / 2, Screen.height / 2, 0);
+		Vector3 end = (Input.mousePosition - center) / Screen.width;
+		end.z = -Screen.width / 2;
+		end /= Screen.width / 2;
+		float deltaMx = Input.GetAxis ("Mouse X");
+		float deltaMy = Input.GetAxis ("Mouse Y");
+		var delta = new Vector3 (deltaMx, deltaMy, 0) * orbitSensitivity;
+		Vector3 start = end + delta;
+		end = transform.TransformDirection (end);
+		start = transform.TransformDirection (start);
+		deltaRotation = Quaternion.FromToRotation (start, end);
+		setRotation = true;
 	}
 
 	protected override void LateUpdate ()
@@ -59,7 +56,7 @@ public class TINUFlightCamera : FlightCamera
 				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
 			HandleInput ();
 		}
-		base.LateUpdate ();
+		//base.LateUpdate ();
 		if (setRotation) {
 			cameraPivot.rotation = deltaRotation * pivotRotation;
 		} else {
