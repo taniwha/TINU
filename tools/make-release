@@ -9,7 +9,7 @@ cd ..
 rm -rf tmp
 
 if test "$1" = "-u" -a -n "$UPLOAD_DIR" -a -n "$UPLOAD_URL"; then
-	uploads="${MODNAME}_v${ver}.zip ${MODNAME}.version Documentation/EL_Manual.pdf"
+	uploads="${MODNAME}_v${ver}.zip ${MODNAME}.version"
 	scp ${uploads} ${UPLOAD_DIR}
 	for f in ${uploads}; do
 		echo ${UPLOAD_URL}/`basename "$f"` | sed -s 's/ /%20/g'
