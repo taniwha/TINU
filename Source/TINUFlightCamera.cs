@@ -86,7 +86,7 @@ public class TINUFlightCamera : FlightCamera
 				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
 			HandleInput ();
 		}
-		//base.LateUpdate ();
+		base.LateUpdate ();
 		if (setRotation) {
 			cameraPivot.rotation = deltaRotation * pivotRotation;
 		} else {
