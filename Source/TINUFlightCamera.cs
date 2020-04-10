@@ -53,12 +53,8 @@ public class TINUFlightCamera : FlightCamera
 		return vec;
 	}
 
-	void HandleInput ()
+	void CalcDragRotationDelta ()
 	{
-		setRotation = false;
-		if (!Input.GetMouseButton (cameraButton)) {
-			return;
-		}
 		var center = new Vector3 (Screen.width / 2, Screen.height / 2, 0);
 		Vector3 end = (Input.mousePosition - center);
 		end /= Screen.height / 2;
@@ -72,6 +68,14 @@ public class TINUFlightCamera : FlightCamera
 		float angle = delta.magnitude / (2 * r) * 60;
 		deltaRotation = Quaternion.AngleAxis (angle, axis);
 		setRotation = true;
+	}
+
+	void HandleInput ()
+	{
+		setRotation = false;
+		if (Input.GetMouseButton (cameraButton)) {
+			CalcDragRotationDelta ();
+		}
 	}
 
 	protected override void LateUpdate ()
