@@ -12,6 +12,8 @@ public class TINUFlightCamera : FlightCamera
 	protected override void Awake ()
 	{
 		base.Awake ();
+		GameEvents.onVesselSOIChanged.Add (onVesselSOIChanged);
+		GameEvents.onVesselChange.Add (onVesselChange);
 	}
 
 	protected override void Start ()
@@ -22,10 +24,26 @@ public class TINUFlightCamera : FlightCamera
 	protected override void OnDestroy ()
 	{
 		base.OnDestroy ();
+		GameEvents.onVesselSOIChanged.Remove (onVesselSOIChanged);
+		GameEvents.onVesselChange.Remove (onVesselChange);
 	}
 
+	void onVesselSOIChanged (GameEvents.HostedFromToAction<Vessel, CelestialBody> a)
+	{
+		if (a.host == FlightGlobals.ActiveVessel) {
+			updateCBframe = true;
+		}
+	}
+
+	void onVesselChange (Vessel vessel)
+	{
+		updateCBframe = true;
+	}
+
+	Vector3 cbDirection;
 	Quaternion deltaRotation;
 	bool setRotation;
+	bool updateCBframe;
 
 	const float r = 1;
 	const float t = r * r / 2;
@@ -78,6 +96,30 @@ public class TINUFlightCamera : FlightCamera
 		}
 	}
 
+	void UpdateCameraAlt ()
+	{
+		if (vesselTarget != null) {
+			cameraAlt = FlightGlobals.getAltitudeAtPos (transform.position, vesselTarget.mainBody);
+		} else if (partTarget != null) {
+			cameraAlt = FlightGlobals.getAltitudeAtPos (transform.position, partTarget.vessel.mainBody);
+		} else {
+			cameraAlt = FlightGlobals.getAltitudeAtPos (transform.position);
+		}
+	}
+
+	Quaternion fromtorot(Vector3 a, Vector3 b)
+	{
+		float ma = a.magnitude;
+		float mb = b.magnitude;
+		Vector3 mb_a = mb * a;
+		Vector3 ma_b = ma * b;
+		float den = 2 * ma * mb;
+		float mba_mab = (mb_a + ma_b).magnitude;
+		float c = mba_mab / den;
+		Vector3 v = Vector3.Cross (a, b) / mba_mab;
+		return new Quaternion(v.x, v.y, v.z, c);
+	}
+
 	protected override void LateUpdate ()
 	{
 		Quaternion pivotRotation = cameraPivot.rotation;
@@ -86,11 +128,22 @@ public class TINUFlightCamera : FlightCamera
 				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
 			HandleInput ();
 		}
-		base.LateUpdate ();
+		Vessel v = FlightGlobals.ActiveVessel;
+		Vector3 dir = v.mainBody.transform.position - v.transform.position;
+		if (updateCBframe) {
+			cbDirection = cameraPivot.InverseTransformDirection (dir);
+			updateCBframe = false;
+		}
+		UpdateCameraAlt ();
 		if (setRotation) {
+			UpdateCameraTransform ();
 			cameraPivot.rotation = deltaRotation * pivotRotation;
+			cbDirection = cameraPivot.InverseTransformDirection (dir);
 		} else {
-			cameraPivot.rotation = pivotRotation;
+			Vector3 cbDir = cameraPivot.TransformDirection (cbDirection);
+			var rot = fromtorot (cbDir, dir);
+			UpdateCameraTransform ();
+			cameraPivot.rotation = rot * pivotRotation;
 		}
 	}
 }
