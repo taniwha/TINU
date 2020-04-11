@@ -51,7 +51,7 @@ public class TINUFlightCamera : FlightCamera
 	// over due to screen aspect)
 	// This is very similar to blender's trackball calculation (based on it,
 	// really)
-	Vector3 TrackballVector (Vector3 xyVec)
+	public Vector3 TrackballVector (Vector3 xyVec)
 	{
 		float d = xyVec.x * xyVec.x + xyVec.y * xyVec.y;
 		Vector3 vec = xyVec;
@@ -71,7 +71,7 @@ public class TINUFlightCamera : FlightCamera
 		return vec;
 	}
 
-	void CalcDragRotationDelta ()
+	public void CalcDragRotationDelta ()
 	{
 		var center = new Vector3 (Screen.width / 2, Screen.height / 2, 0);
 		Vector3 end = (Input.mousePosition - center);
@@ -88,11 +88,54 @@ public class TINUFlightCamera : FlightCamera
 		setRotation = true;
 	}
 
+	public void CalcPYRotationDelta (Vector2 py)
+	{
+		Vector3 axis;
+		float angle = py.magnitude * 60;
+		axis = (cameraPivot.up * py.y - cameraPivot.right * py.x);
+		deltaRotation = Quaternion.AngleAxis (angle, axis);
+		setRotation = true;
+	}
+
+	public void UpdateZoomFov(float delta)
+	{
+		if (GameSettings.MODIFIER_KEY.GetKey ()) {
+			SetFoV (Mathf.Clamp (FieldOfView + delta * 5, fovMin, fovMax));
+		} else {
+			SetDistance ((1 - delta) * Distance);
+		}
+	}
+
+	float conv (bool b)
+	{
+		return b ? 1 : 0;
+	}
+
 	void HandleInput ()
 	{
 		setRotation = false;
 		if (Input.GetMouseButton (cameraButton)) {
 			CalcDragRotationDelta ();
+		}
+		float wheel = GameSettings.AXIS_MOUSEWHEEL.GetAxis ();
+		if (wheel != 0) {
+			UpdateZoomFov (wheel);
+		}
+		float key = (conv (GameSettings.ZOOM_IN.GetKey ())
+					 - conv (GameSettings.ZOOM_OUT.GetKey()));
+		if (key != 0) {
+			key *= Time.unscaledDeltaTime;
+			UpdateZoomFov (key);
+		}
+		var py = new Vector2 (conv (GameSettings.CAMERA_ORBIT_DOWN.GetKey ())
+							  - conv (GameSettings.CAMERA_ORBIT_UP.GetKey ()),
+							  conv (GameSettings.CAMERA_ORBIT_LEFT.GetKey ())
+							  - conv (GameSettings.CAMERA_ORBIT_RIGHT.GetKey ()));
+		py *= Time.unscaledDeltaTime;
+		py.x += GameSettings.AXIS_CAMERA_PITCH.GetAxis () * orbitSensitivity;
+		py.y += GameSettings.AXIS_CAMERA_HDG.GetAxis () * orbitSensitivity;
+		if (py.x != 0 || py.y != 0) {
+			CalcPYRotationDelta (py);
 		}
 	}
 
