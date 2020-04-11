@@ -31,19 +31,19 @@ public class TINUFlightCamera : FlightCamera
 	void onVesselSOIChanged (GameEvents.HostedFromToAction<Vessel, CelestialBody> a)
 	{
 		if (a.host == FlightGlobals.ActiveVessel) {
-			updateCBframe = true;
+			updateReference = true;
 		}
 	}
 
 	void onVesselChange (Vessel vessel)
 	{
-		updateCBframe = true;
+		updateReference = true;
 	}
 
-	Vector3 cbDirection;
+	Vector3 primaryReference;
 	Quaternion deltaRotation;
 	bool setRotation;
-	bool updateCBframe;
+	bool updateReference;
 
 	const float r = 1;
 	const float t = r * r / 2;
@@ -173,18 +173,18 @@ public class TINUFlightCamera : FlightCamera
 		}
 		Vessel v = FlightGlobals.ActiveVessel;
 		Vector3 dir = v.mainBody.transform.position - v.transform.position;
-		if (updateCBframe) {
-			cbDirection = cameraPivot.InverseTransformDirection (dir);
-			updateCBframe = false;
+		if (updateReference) {
+			primaryReference = cameraPivot.InverseTransformDirection (dir);
+			updateReference = false;
 		}
 		UpdateCameraAlt ();
 		if (setRotation) {
 			UpdateCameraTransform ();
 			cameraPivot.rotation = deltaRotation * pivotRotation;
-			cbDirection = cameraPivot.InverseTransformDirection (dir);
+			primaryReference = cameraPivot.InverseTransformDirection (dir);
 		} else {
-			Vector3 cbDir = cameraPivot.TransformDirection (cbDirection);
-			var rot = fromtorot (cbDir, dir);
+			Vector3 refVec = cameraPivot.TransformDirection (primaryReference);
+			var rot = fromtorot (refVec, dir);
 			UpdateCameraTransform ();
 			cameraPivot.rotation = rot * pivotRotation;
 		}
