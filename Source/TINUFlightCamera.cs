@@ -41,9 +41,19 @@ public class TINUFlightCamera : FlightCamera
 	}
 
 	Vector3 primaryReference;
+	Vector3 secondaryReference;
+	Vector3 primaryVector;
+	Vector3 secondaryVector;
+
 	Quaternion deltaRotation;
+
 	bool setRotation;
 	bool updateReference;
+	bool secondaryVecOK;
+	bool secondaryRefOK;
+	bool autoRotate;
+
+	const float secondaryEpsilon = 1e-2f;
 
 	const float r = 1;
 	const float t = r * r / 2;
@@ -163,6 +173,57 @@ public class TINUFlightCamera : FlightCamera
 		return new Quaternion(v.x, v.y, v.z, c);
 	}
 
+	void CalcReferenceVectors ()
+	{
+		Modes m = mode;
+		Vector3 vec;
+		Vector3 cbDir;
+
+		if (m == Modes.AUTO) {
+			m = autoMode;
+		}
+
+		Vessel v = FlightGlobals.ActiveVessel;
+		cbDir = v.mainBody.transform.position - v.transform.position;
+		switch (m) {
+			case Modes.FREE:
+				primaryVector = cbDir;
+				secondaryVector = (Vector3) v.srf_velocity;
+				autoRotate = true;
+				break;
+			case Modes.CHASE:
+				primaryVector = cbDir;
+				if (v.targetObject != null) {
+					Transform t = v.targetObject.GetTransform ();
+					vec = t.position - v.transform.position;
+				} else {
+					vec = (Vector3) v.srf_velocity;
+				}
+				secondaryVector = vec;
+				autoRotate = true;
+				break;
+			case Modes.LOCKED:
+				autoRotate = false;
+				break;
+			case Modes.ORBITAL:
+				primaryVector = (Vector3) v.obt_velocity;
+				secondaryVector = cbDir;
+				autoRotate = true;
+				break;
+		}
+		if (autoRotate) {
+			vec = Vector3.Dot (secondaryVector, primaryVector) * primaryVector;
+			vec /= Vector3.Dot (primaryVector, primaryVector);
+			secondaryVector -= vec;
+			secondaryVecOK = (secondaryVector.x < -secondaryEpsilon
+							  || secondaryVector.x > secondaryEpsilon
+							  || secondaryVector.y < -secondaryEpsilon
+							  || secondaryVector.y > secondaryEpsilon
+							  || secondaryVector.y < -secondaryEpsilon
+							  || secondaryVector.z > secondaryEpsilon);
+		}
+	}
+
 	protected override void LateUpdate ()
 	{
 		Quaternion pivotRotation = cameraPivot.rotation;
@@ -171,22 +232,35 @@ public class TINUFlightCamera : FlightCamera
 				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
 			HandleInput ();
 		}
-		Vessel v = FlightGlobals.ActiveVessel;
-		Vector3 dir = v.mainBody.transform.position - v.transform.position;
+		CalcReferenceVectors ();
 		if (updateReference) {
-			primaryReference = cameraPivot.InverseTransformDirection (dir);
+			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
+			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
+			secondaryRefOK = secondaryVecOK;
 			updateReference = false;
+		}
+		if (secondaryVecOK && !secondaryRefOK) {
+			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
 		}
 		UpdateCameraAlt ();
 		if (setRotation) {
 			UpdateCameraTransform ();
 			cameraPivot.rotation = deltaRotation * pivotRotation;
-			primaryReference = cameraPivot.InverseTransformDirection (dir);
-		} else {
-			Vector3 refVec = cameraPivot.TransformDirection (primaryReference);
-			var rot = fromtorot (refVec, dir);
+			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
+			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
+			secondaryRefOK = secondaryVecOK;
+		} else if (autoRotate) {
+			Vector3 priVec = cameraPivot.TransformDirection (primaryReference);
+			var rot = fromtorot (priVec, primaryVector);
+			if (secondaryRefOK) {
+				Vector3 secVec = rot * cameraPivot.TransformDirection (secondaryReference);
+				rot = fromtorot (secVec, secondaryVector) * rot;
+			}
 			UpdateCameraTransform ();
 			cameraPivot.rotation = rot * pivotRotation;
+		} else {
+			UpdateCameraTransform ();
+			cameraPivot.rotation = pivotRotation;
 		}
 	}
 }
