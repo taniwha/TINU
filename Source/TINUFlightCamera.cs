@@ -243,6 +243,10 @@ public class TINUFlightCamera : FlightCamera
 
 	protected override void LateUpdate ()
 	{
+		UpdateCameraAlt ();
+		if (!updateActive) {
+			return;
+		}
 		Quaternion pivotRotation = cameraPivot.rotation;
 		if (InputLockManager.IsUnlocked(ControlTypes.CAMERACONTROLS)
 			|| (FlightDriver.Pause
@@ -259,7 +263,6 @@ public class TINUFlightCamera : FlightCamera
 		if (secondaryVecOK && !secondaryRefOK) {
 			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
 		}
-		UpdateCameraAlt ();
 		if (setRotation) {
 			UpdateCameraTransform ();
 			cameraPivot.rotation = deltaRotation * pivotRotation;
