@@ -17,7 +17,14 @@ ZIP		:= zip
 #SUBDIRS=Assets Documentation GameData Source
 SUBDIRS=Source
 
-all clean install:
+all clean:
+	@for dir in ${SUBDIRS}; do \
+		make -C $$dir $@ || exit 1; \
+	done
+
+install:
+	mkdir -p ${PLUGINDIR}
+	cp License.txt ${PLUGINDIR}
 	@for dir in ${SUBDIRS}; do \
 		make -C $$dir $@ || exit 1; \
 	done
