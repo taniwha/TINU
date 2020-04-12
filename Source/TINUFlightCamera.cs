@@ -241,6 +241,16 @@ public class TINUFlightCamera : FlightCamera
 		}
 	}
 
+	const float rootHalf = 0.707106781f;
+	void UpdateEVAFrame ()
+	{
+		var rot = Quaternion.LookRotation (-primaryVector, secondaryVector);
+		var axis = rot * Vector3.right * rootHalf;
+		rot = new Quaternion (axis.x, axis.y, axis.z, rootHalf) * rot;
+		FoRlerp = 1;
+		updateFoR (rot, FoRlerp);
+	}
+
 	protected override void LateUpdate ()
 	{
 		UpdateCameraAlt ();
@@ -282,6 +292,7 @@ public class TINUFlightCamera : FlightCamera
 			UpdateCameraTransform ();
 			cameraPivot.rotation = pivotRotation;
 		}
+		UpdateEVAFrame ();
 	}
 }
 
