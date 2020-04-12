@@ -169,12 +169,19 @@ public class TINUFlightCamera : FlightCamera
 	void UpdateCameraAlt ()
 	{
 		Vector3 pos = transform.position;
+
 		if (vesselTarget != null) {
 			CelestialBody body = vesselTarget.mainBody;
 			cameraAlt = FlightGlobals.getAltitudeAtPos (pos, body);
 		} else if (partTarget != null) {
 			CelestialBody body = partTarget.vessel.mainBody;
 			cameraAlt = FlightGlobals.getAltitudeAtPos (pos, body);
+			if (partTarget.vessel != FlightGlobals.ActiveVessel) {
+				Vessel v = FlightGlobals.ActiveVessel;
+				if ((pos - v.transform.position).sqrMagnitude > 2000 * 2000) {
+					SetTargetVessel (FlightGlobals.ActiveVessel);
+				}
+			}
 		} else {
 			cameraAlt = FlightGlobals.getAltitudeAtPos (pos);
 		}
