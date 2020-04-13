@@ -57,21 +57,31 @@ public class TINUFlightCamera : FlightCamera
 		updateReference = true;
 	}
 
+	enum SecondaryAxis {
+		None,		// no axis set
+		X, Y, Z,	// world reference frame (backup)
+		Velocity,
+		InVector,
+	}
+
 	Vector3 primaryReference;
 	Vector3 secondaryReference;
 	Vector3 primaryVector;
 	Vector3 secondaryVector;
+	SecondaryAxis secondaryAxis;
 
 	Quaternion deltaRotation;
 	Quaternion evaFoR;
 
 	bool setRotation;
 	bool updateReference;
-	bool secondaryVecOK;
-	bool secondaryRefOK;
+	bool resetSecondaryReference;
 	bool autoRotate;
 
-	const float secondaryEpsilon = 1e-2f;
+	// this is the square of the velocity, so actually only 3m/s. It may seem
+	// high, but it's faster than kerbal running speed, so it keeps the free
+	// and chase camera modes usable for a running kerbal.
+	const float secondaryEpsilon = 9;
 
 	const float r = 1;
 	const float t = r * r / 2;
@@ -201,33 +211,34 @@ public class TINUFlightCamera : FlightCamera
 		return new Quaternion(v.x, v.y, v.z, c);
 	}
 
+	bool ProjectVector (Vector3 normal, ref Vector3 vector)
+	{
+		float mag = Vector3.Dot (normal, normal);
+		vector -= Vector3.Dot (vector, normal) * normal / mag;
+		return Vector3.Dot (vector, vector) > secondaryEpsilon;
+	}
+
 	void CalcReferenceVectors ()
 	{
-		Modes m = mode;
-		Vector3 vec;
-		Vector3 cbDir;
+		SecondaryAxis sAxis = SecondaryAxis.None;
 
-		if (m == Modes.AUTO) {
-			m = autoMode;
+		Modes pm = mode;
+		Modes sm = mode;
+		Vector3 cbDir;
+		Vessel v = FlightGlobals.ActiveVessel;
+		bool frameLock = false;
+
+		if (pm == Modes.AUTO) {
+			pm = autoMode;
+			sm = autoMode;
+		} else if (pm == Modes.CHASE) {
+			pm = GetAutoModeForVessel (v);
 		}
 
-		Vessel v = FlightGlobals.ActiveVessel;
 		cbDir = v.mainBody.transform.position - v.transform.position;
-		switch (m) {
+		switch (pm) {
 			case Modes.FREE:
 				primaryVector = cbDir;
-				secondaryVector = (Vector3) v.srf_velocity;
-				autoRotate = true;
-				break;
-			case Modes.CHASE:
-				primaryVector = cbDir;
-				if (v.targetObject != null) {
-					Transform t = v.targetObject.GetTransform ();
-					vec = t.position - v.transform.position;
-				} else {
-					vec = (Vector3) v.srf_velocity;
-				}
-				secondaryVector = vec;
 				autoRotate = true;
 				break;
 			case Modes.LOCKED:
@@ -235,20 +246,42 @@ public class TINUFlightCamera : FlightCamera
 				break;
 			case Modes.ORBITAL:
 				primaryVector = (Vector3) v.obt_velocity;
-				secondaryVector = cbDir;
 				autoRotate = true;
+				frameLock = true;
 				break;
 		}
-		if (autoRotate) {
-			vec = Vector3.Dot (secondaryVector, primaryVector) * primaryVector;
-			vec /= Vector3.Dot (primaryVector, primaryVector);
-			secondaryVector -= vec;
-			secondaryVecOK = (secondaryVector.x < -secondaryEpsilon
-							  || secondaryVector.x > secondaryEpsilon
-							  || secondaryVector.y < -secondaryEpsilon
-							  || secondaryVector.y > secondaryEpsilon
-							  || secondaryVector.y < -secondaryEpsilon
-							  || secondaryVector.z > secondaryEpsilon);
+		// locked and orbital don't use a secondary vector. locked follows
+		// the vessel's orientation and oribtal uses frame lock (FIXME would
+		// be nice for orbital to use star lock, but that takes messing with
+		// the rotating reference frame when below certain altitudes)
+		if (sm == Modes.FREE || sm == Modes.CHASE) {
+			secondaryVector = v.srf_velocity;
+			if (sm == Modes.CHASE && v.targetObject != null) {
+				Transform t = v.targetObject.GetTransform ();
+				secondaryVector = t.position - v.transform.position;
+			}
+			sAxis = SecondaryAxis.Velocity;
+			frameLock = !ProjectVector (primaryVector, ref secondaryVector);
+		}
+		if (frameLock) {
+			float x = Mathf.Abs (Vector3.Dot (primaryVector, Vector3.right));
+			float y = Mathf.Abs (Vector3.Dot (primaryVector, Vector3.forward));
+			float z = Mathf.Abs (Vector3.Dot (primaryVector, Vector3.up));
+			if (x <= y && x <= z) {
+				secondaryVector = Vector3.right;
+				sAxis = SecondaryAxis.X;
+			} else if (y <= x && y <= z) {
+				secondaryVector = Vector3.forward;
+				sAxis = SecondaryAxis.Y;
+			} else {
+				secondaryVector = Vector3.up;
+				sAxis = SecondaryAxis.Z;
+			}
+			ProjectVector (primaryVector, ref secondaryVector);
+		}
+		if (secondaryAxis != sAxis) {
+			secondaryAxis = sAxis;
+			resetSecondaryReference = true;
 		}
 	}
 
@@ -290,10 +323,10 @@ public class TINUFlightCamera : FlightCamera
 		if (updateReference) {
 			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
 			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
-			secondaryRefOK = secondaryVecOK;
 			updateReference = false;
 		}
-		if (secondaryVecOK && !secondaryRefOK) {
+		if (resetSecondaryReference) {
+			resetSecondaryReference = false;
 			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
 		}
 		if (setRotation) {
@@ -301,14 +334,11 @@ public class TINUFlightCamera : FlightCamera
 			cameraPivot.rotation = deltaRotation * pivotRotation;
 			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
 			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
-			secondaryRefOK = secondaryVecOK;
 		} else if (autoRotate) {
 			Vector3 priVec = cameraPivot.TransformDirection (primaryReference);
 			var rot = fromtorot (priVec, primaryVector);
-			if (secondaryRefOK) {
-				Vector3 secVec = rot * cameraPivot.TransformDirection (secondaryReference);
-				rot = fromtorot (secVec, secondaryVector) * rot;
-			}
+			Vector3 secVec = rot * cameraPivot.TransformDirection (secondaryReference);
+			rot = fromtorot (secVec, secondaryVector) * rot;
 			UpdateCameraTransform ();
 			cameraPivot.rotation = rot * pivotRotation;
 		} else {
