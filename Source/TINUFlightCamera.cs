@@ -63,6 +63,7 @@ public class TINUFlightCamera : FlightCamera
 	Vector3 secondaryVector;
 
 	Quaternion deltaRotation;
+	Quaternion evaFoR;
 
 	bool setRotation;
 	bool updateReference;
@@ -254,11 +255,23 @@ public class TINUFlightCamera : FlightCamera
 	const float rootHalf = 0.707106781f;
 	void UpdateEVAFrame ()
 	{
-		var rot = Quaternion.LookRotation (-primaryVector, secondaryVector);
+		var rot = Quaternion.LookRotation (-primaryVector, Vector3.down);
 		var axis = rot * Vector3.right * rootHalf;
 		rot = new Quaternion (axis.x, axis.y, axis.z, rootHalf) * rot;
 		FoRlerp = 1;
 		updateFoR (rot, FoRlerp);
+		evaFoR = rot;
+	}
+	void UpdateEuler ()
+	{
+		var evaFwd = evaFoR * Vector3.forward;
+		var evaUp = evaFoR * Vector3.up;
+		var evaRight = evaFoR * Vector3.right;
+		float y = Vector3.Dot (transform.forward, evaFwd);
+		float x = Vector3.Dot (transform.forward, evaRight);
+		float z = Vector3.Dot (transform.forward, evaUp);
+		camHdg = Mathf.Atan2 (x, y);
+		camPitch = Mathf.Atan2 (z, Mathf.Sqrt (x * x + y * y));
 	}
 
 	protected override void LateUpdate ()
@@ -303,6 +316,16 @@ public class TINUFlightCamera : FlightCamera
 			cameraPivot.rotation = pivotRotation;
 		}
 		UpdateEVAFrame ();
+		UpdateEuler ();
+	}
+
+	protected override void UpdateCameraTransform ()
+	{
+		camHdg = 0;
+		camPitch = 0;
+		FoRlerp = 1;
+		updateFoR (cameraPivot.rotation, FoRlerp);
+		base.UpdateCameraTransform ();
 	}
 }
 
