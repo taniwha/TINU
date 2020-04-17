@@ -309,6 +309,9 @@ public class TINUFlightCamera : FlightCamera
 
 	protected override void LateUpdate ()
 	{
+		if (!HighLogic.LoadedSceneIsFlight) {
+			return;
+		}
 		UpdateCameraAlt ();
 		if (!updateActive) {
 			return;
