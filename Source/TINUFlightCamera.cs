@@ -161,7 +161,7 @@ public class TINUFlightCamera : FlightCamera
 		if (mode == Modes.LOCKED) {
 			frame = FlightGlobals.ActiveVessel.ReferenceTransform.rotation;
 		} else {
-			frame = evaFoR;
+			frame = Quaternion.LookRotation (primaryVector, secondaryVector);
 		}
 
 		if (Input.GetKeyDown (KeyCode.Keypad7)) {
