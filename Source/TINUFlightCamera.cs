@@ -156,6 +156,7 @@ public class TINUFlightCamera : FlightCamera
 		Quaternion frame;
 		Quaternion target = transform.rotation;
 		Vector3 axis;
+		bool switchView = false;
 
 		if (mode == Modes.LOCKED) {
 			frame = FlightGlobals.ActiveVessel.ReferenceTransform.rotation;
@@ -164,24 +165,28 @@ public class TINUFlightCamera : FlightCamera
 		}
 
 		if (Input.GetKeyDown (KeyCode.Keypad7)) {
+			switchView = true;
 			if (reverse) {
 				target = frame * new Quaternion (1, 0, 0, 0);
 			} else {
 				target = frame;
 			}
 		} else if (Input.GetKeyDown (KeyCode.Keypad1)) {
+			switchView = true;
 			if (reverse) {
 				target = frame * new Quaternion (0, rootHalf, -rootHalf, 0);
 			} else {
 				target = frame * new Quaternion (-rootHalf, 0, 0, rootHalf);
 			}
 		} else if (Input.GetKeyDown (KeyCode.Keypad3)) {
+			switchView = true;
 			if (reverse) {
 				target = frame * new Quaternion (-0.5f, 0.5f, -0.5f, 0.5f);
 			} else {
 				target = frame * new Quaternion (-0.5f, -0.5f, 0.5f, 0.5f);
 			}
 		} else if (Input.GetKeyDown (KeyCode.Keypad9)) {
+			switchView = true;
 			if (reverse) {
 				axis = transform.up;
 			} else {
@@ -189,16 +194,18 @@ public class TINUFlightCamera : FlightCamera
 			}
 			target = new Quaternion (axis.x, axis.y, axis.z, 0) * target;
 		}
-		if (mode == Modes.LOCKED) {
-			Quaternion q = Quaternion.Inverse (transform.rotation);
-			Quaternion t = target;
-			deltaRotation = t * q;
-			setRotation = true;
-		} else {
-			Quaternion q = transform.rotation;
-			Quaternion t = Quaternion.Inverse (target);
-			primaryReference = t * q * primaryReference;
-			secondaryReference = t * q * secondaryReference;
+		if (switchView) {
+			if (mode == Modes.LOCKED) {
+				Quaternion q = Quaternion.Inverse (transform.rotation);
+				Quaternion t = target;
+				deltaRotation = t * q;
+				setRotation = true;
+			} else {
+				Quaternion q = transform.rotation;
+				Quaternion t = Quaternion.Inverse (target);
+				primaryReference = t * q * primaryReference;
+				secondaryReference = t * q * secondaryReference;
+			}
 		}
 	}
 
