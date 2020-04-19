@@ -24,7 +24,8 @@ namespace TINU {
 public class TINUFlightCamera : FlightCamera
 {
 	Transform cameraPivot;
-	static int cameraButton = 1;
+	static int cameraRotateButton = 1;
+	static int cameraOffsetButton = 2;
 
 	protected override void Awake ()
 	{
@@ -152,7 +153,7 @@ public class TINUFlightCamera : FlightCamera
 	void HandleInput ()
 	{
 		setRotation = false;
-		if (Input.GetMouseButton (cameraButton)) {
+		if (Input.GetMouseButton (cameraRotateButton)) {
 			CalcDragRotationDelta ();
 		}
 		float wheel = GameSettings.AXIS_MOUSEWHEEL.GetAxis ();
@@ -175,6 +176,19 @@ public class TINUFlightCamera : FlightCamera
 		if (py.x != 0 || py.y != 0) {
 			CalcPYRotationDelta (py);
 		}
+
+		if (Input.GetMouseButton (cameraOffsetButton)) {
+			offsetHdg -= Input.GetAxis ("Mouse X") * orbitSensitivity * 0.5f;
+			offsetPitch += Input.GetAxis ("Mouse Y") * orbitSensitivity * 0.5f;
+		}
+		if (Mouse.Middle.GetDoubleClick ()) {
+			offsetHdg = 0;
+			offsetPitch = 0;
+			SetDefaultFoV ();
+		}
+		float offsetClamp = mainCamera.fieldOfView * Mathf.Deg2Rad * 0.6f;
+		offsetHdg = Mathf.Clamp (offsetHdg, -offsetClamp, offsetClamp);
+		offsetPitch = Mathf.Clamp (offsetPitch, -offsetClamp, offsetClamp);
 	}
 
 	void UpdateCameraAlt ()
