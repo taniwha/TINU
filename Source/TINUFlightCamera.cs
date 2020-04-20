@@ -112,9 +112,10 @@ public class TINUFlightCamera : FlightCamera
 
 	public void CalcDragRotationDelta ()
 	{
+		float size = Mathf.Min (Screen.height, Screen.width) / 2;
 		var center = new Vector3 (Screen.width / 2, Screen.height / 2, 0);
 		Vector3 end = (Input.mousePosition - center);
-		end /= Screen.height / 2;
+		end /= size;
 		float deltaMx = Input.GetAxis ("Mouse X");
 		float deltaMy = Input.GetAxis ("Mouse Y");
 		var delta = new Vector3 (deltaMx, deltaMy, 0) * orbitSensitivity;
