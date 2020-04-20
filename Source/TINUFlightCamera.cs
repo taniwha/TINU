@@ -217,7 +217,8 @@ public class TINUFlightCamera : FlightCamera
 			CalcDragRotationDelta ();
 		}
 		float wheel = GameSettings.AXIS_MOUSEWHEEL.GetAxis ();
-		if (wheel != 0) {
+		var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+		if (wheel != 0 && !eventSystem.IsPointerOverGameObject ()) {
 			UpdateZoomFov (wheel);
 		}
 		float key = (conv (GameSettings.ZOOM_IN.GetKey ())
