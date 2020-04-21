@@ -159,6 +159,18 @@ public class TINUFlightCamera : FlightCamera
 		Vector3 axis;
 		bool switchView = false;
 
+		if (Input.GetKeyDown (KeyCode.Keypad4)) {
+			SetMode (Modes.LOCKED);
+		} else if (Input.GetKeyDown (KeyCode.Keypad5)) {
+			SetMode (Modes.CHASE);
+		} else if (Input.GetKeyDown (KeyCode.Keypad6)) {
+			SetMode (Modes.FREE);
+		} else if (Input.GetKeyDown (KeyCode.Keypad8)) {
+			SetMode (Modes.ORBITAL);
+		} else if (Input.GetKeyDown (KeyCode.Keypad2)) {
+			SetMode (Modes.AUTO);
+		}
+
 		if (mode == Modes.LOCKED) {
 			frame = FlightGlobals.ActiveVessel.ReferenceTransform.rotation;
 		} else {
