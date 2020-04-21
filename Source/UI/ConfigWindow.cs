@@ -224,6 +224,22 @@ namespace TINU {
 			GUILayout.EndHorizontal ();
 		}
 
+		void SphereScale ()
+		{
+			float sphereMin = 0.75f;
+			float sphereMax = 1.25f;
+			float sphere = TINUFlightCamera.sphereScale;
+
+			GUILayout.Label ("Sphere Size");
+			GUILayout.BeginHorizontal ();
+			sphere = GUILayout.HorizontalSlider (sphere, sphereMin, sphereMax,
+											    sliderStyle, sliderThumb);
+			sphere = Mathf.Floor (sphere * 20) / 20;
+			TINUFlightCamera.sphereScale = sphere;
+			GUILayout.Label (sphere.ToString ("N2"));
+			GUILayout.EndHorizontal ();
+		}
+
 		void WindowGUI (int windowID)
 		{
 			var e = Event.current;
@@ -247,6 +263,7 @@ namespace TINU {
 			InvertCamOffset ();
 			DefaultFoV ();
 			KeySensitivity ();
+			SphereScale ();
 			GUILayout.EndVertical ();
 
 			GUILayout.EndHorizontal ();

@@ -38,6 +38,7 @@ public class TINUFlightCamera : FlightCamera
 	};
 	public static bool invertCameraOffset = false;
 	public static float cameraKeySensitivity = 1;
+	public static float sphereScale = 1;
 
 	public static string DataPath { get; private set; }
 
@@ -92,6 +93,7 @@ public class TINUFlightCamera : FlightCamera
 				LoadBool (n, "invertCameraOffset", ref invertCameraOffset);
 				LoadFloat (n, "cameraKeySensitivity", ref cameraKeySensitivity);
 				LoadFloat (n, "fovDefault", ref fetch.fovDefault);
+				LoadFloat (n, "sphereScale", ref sphereScale);
 			}
 		}
 	}
@@ -116,6 +118,7 @@ public class TINUFlightCamera : FlightCamera
 		settings.AddValue ("invertCameraOffset", invertCameraOffset);
 		settings.AddValue ("cameraKeySensitivity", cameraKeySensitivity);
 		settings.AddValue ("fovDefault", fetch.fovDefault);
+		settings.AddValue ("sphereScale", sphereScale);
 
 		var node = new ConfigNode();
 		node.AddNode (settings);
@@ -203,7 +206,7 @@ public class TINUFlightCamera : FlightCamera
 		float size = Mathf.Min (Screen.height, Screen.width) / 2;
 		var center = new Vector3 (Screen.width / 2, Screen.height / 2, 0);
 		Vector3 end = (Input.mousePosition - center);
-		end /= size;
+		end /= size * sphereScale;
 		float deltaMx = Input.GetAxis ("Mouse X");
 		float deltaMy = Input.GetAxis ("Mouse Y");
 		var delta = new Vector3 (deltaMx, deltaMy, 0) * orbitSensitivity;
