@@ -16,6 +16,7 @@ along with TINU.  If not, see
 <http://www.gnu.org/licenses/>.
 */
 using System;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 
@@ -38,11 +39,87 @@ public class TINUFlightCamera : FlightCamera
 	public static bool invertCameraOffset = false;
 	public static float cameraKeySensitivity = 1;
 
+	public static string DataPath { get; private set; }
+
 	protected override void Awake ()
 	{
 		base.Awake ();
 		GameEvents.onVesselSOIChanged.Add (onVesselSOIChanged);
 		GameEvents.onVesselChange.Add (onVesselChange);
+
+		DataPath = AssemblyLoader.loadedAssemblies.GetPathByType (typeof (TINUFlightCamera));
+		LoadSettings ();
+	}
+
+	static void LoadDisable (ConfigNode n)
+	{
+		if (!n.HasValue ("disable")) {
+			return;
+		}
+		string []vals = ParseExtensions.ParseArray (n.GetValue ("disable"));
+		if (vals.Length > 0) {
+			bool.TryParse (vals[0], out disableAll);
+		}
+		for (int i = 1; i < vals.Length && i <= disableMode.Length; i++) {
+			bool.TryParse (vals[i], out disableMode[i - 1]);
+		}
+	}
+
+	static void LoadBool (ConfigNode n, string name, ref bool boolVal)
+	{
+		if (n.HasValue (name)) {
+			bool.TryParse (n.GetValue (name), out boolVal);
+		}
+	}
+
+	static void LoadFloat (ConfigNode n, string name, ref float floatVal)
+	{
+		if (n.HasValue (name)) {
+			float.TryParse (n.GetValue (name), out floatVal);
+		}
+	}
+
+	public static void LoadSettings ()
+	{
+		string filePath = DataPath + "/" + "settings.cfg";
+		var node = ConfigNode.Load (filePath);
+		if (node == null) {
+			return;
+		}
+		foreach (ConfigNode n in node.nodes) {
+			if (n.name == "TINU_Settings") {
+				LoadDisable (n);
+				LoadBool (n, "invertCameraOffset", ref invertCameraOffset);
+				LoadFloat (n, "cameraKeySensitivity", ref cameraKeySensitivity);
+				LoadFloat (n, "fovDefault", ref fetch.fovDefault);
+			}
+		}
+	}
+
+	static void SaveDisable (ConfigNode node)
+	{
+		var flags = new bool[6];
+		flags[0] = disableAll;
+		for (int i = 0; i < disableMode.Length; i++) {
+			flags[i + 1] = disableMode[i];
+		}
+		node.AddValue ("disable", ConfigNode.WriteBoolArray (flags));
+	}
+
+	public static void SaveSettings ()
+	{
+		string filePath = DataPath + "/" + "settings.cfg";
+		Directory.CreateDirectory (DataPath);
+
+		var settings = new ConfigNode ("TINU_Settings");
+		SaveDisable (settings);
+		settings.AddValue ("invertCameraOffset", invertCameraOffset);
+		settings.AddValue ("cameraKeySensitivity", cameraKeySensitivity);
+		settings.AddValue ("fovDefault", fetch.fovDefault);
+
+		var node = new ConfigNode();
+		node.AddNode (settings);
+		node.Save (filePath);
 	}
 
 	protected override void Start ()

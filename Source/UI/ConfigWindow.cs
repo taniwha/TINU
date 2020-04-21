@@ -84,6 +84,7 @@ namespace TINU {
 			TINU_AppButton.Toggle -= ToggleGUI;
 			GameEvents.onHideUI.Remove (onHideUI);
 			GameEvents.onShowUI.Remove (onShowUI);
+			TINUFlightCamera.SaveSettings ();
 		}
 
 		public static void ToggleGUI ()
@@ -113,6 +114,9 @@ namespace TINU {
 		void UpdateGUIState ()
 		{
 			enabled = !hide_ui && gui_enabled;
+			if (!enabled) {
+				TINUFlightCamera.SaveSettings ();
+			}
 		}
 
 		void InitStyles ()
@@ -140,6 +144,13 @@ namespace TINU {
 		{
 			string ver = TINUVersionReport.GetVersion ();
 			GUILayout.Label (ver);
+		}
+
+		void LoadSettings ()
+		{
+			if (GUILayout.Button ("Load Settings")) {
+				TINUFlightCamera.LoadSettings ();
+			}
 		}
 
 		void ToggleEnum<T> (ref T curState, T state, string label)
@@ -240,7 +251,10 @@ namespace TINU {
 
 			GUILayout.EndHorizontal ();
 
+			GUILayout.BeginHorizontal ();
 			VersionInfo ();
+			LoadSettings ();
+			GUILayout.EndHorizontal ();
 			GUILayout.EndVertical ();
 
 			GUI.DragWindow (windowdrag);
