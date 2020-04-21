@@ -28,7 +28,7 @@ info:
 #	inkscape --export-width=24 --export-height=24 --export-background='#000000' --export-background-opacity=0 --export-png=$@ $^
 
 clean:
-	rm -f icon_button.png
+	#rm -f icon_button.png
 
 install: all
 	mkdir -p ${MODGAMEDATA}/Textures
