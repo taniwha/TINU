@@ -27,6 +27,17 @@ public class TINUFlightCamera : FlightCamera
 	static int cameraRotateButton = 1;
 	static int cameraOffsetButton = 2;
 
+	public static bool disableAll = false;
+	public static bool []disableMode = {
+			false,	// AUTO
+			false,	// FREE
+			false,	// ORBITAL
+			false,	// CHASE
+			false,	// LOCKED
+	};
+	public static bool invertCameraOffset = false;
+	public static float cameraKeySensitivity = 1;
+
 	protected override void Awake ()
 	{
 		base.Awake ();
@@ -246,13 +257,18 @@ public class TINUFlightCamera : FlightCamera
 		py *= Time.unscaledDeltaTime;
 		py.x += GameSettings.AXIS_CAMERA_PITCH.GetAxis () * orbitSensitivity;
 		py.y += GameSettings.AXIS_CAMERA_HDG.GetAxis () * orbitSensitivity;
+		py *= cameraKeySensitivity;
 		if (py.x != 0 || py.y != 0) {
 			CalcPYRotationDelta (py);
 		}
 
 		if (Input.GetMouseButton (cameraOffsetButton)) {
-			offsetHdg -= Input.GetAxis ("Mouse X") * orbitSensitivity * 0.5f;
-			offsetPitch += Input.GetAxis ("Mouse Y") * orbitSensitivity * 0.5f;
+			float scale = orbitSensitivity * 0.5f;
+			if (invertCameraOffset) {
+				scale = -scale;
+			}
+			offsetHdg -= Input.GetAxis ("Mouse X") * scale;
+			offsetPitch += Input.GetAxis ("Mouse Y") * scale;
 		}
 		if (Mouse.Middle.GetDoubleClick ()) {
 			offsetHdg = 0;
@@ -410,6 +426,10 @@ public class TINUFlightCamera : FlightCamera
 			|| (FlightDriver.Pause
 				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
 			HandleInput ();
+			if (disableAll || disableMode[(int)mode]) {
+				base.LateUpdate ();
+				return;
+			}
 		}
 		CalcReferenceVectors ();
 		if (updateReference) {
@@ -443,10 +463,12 @@ public class TINUFlightCamera : FlightCamera
 
 	protected override void UpdateCameraTransform ()
 	{
-		camHdg = 0;
-		camPitch = 0;
-		FoRlerp = 1;
-		updateFoR (cameraPivot.rotation, FoRlerp);
+		if (!(disableAll || disableMode[(int)mode])) {
+			camHdg = 0;
+			camPitch = 0;
+			FoRlerp = 1;
+			updateFoR (cameraPivot.rotation, FoRlerp);
+		}
 		base.UpdateCameraTransform ();
 	}
 }

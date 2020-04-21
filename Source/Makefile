@@ -12,6 +12,11 @@ TINU_FILES := \
 	assembly/VersionReport.cs	\
 	FlightCameraOverride.cs		\
 	TINUFlightCamera.cs			\
+	Toolbar.cs					\
+	UI/ConfigWindow.cs			\
+	UI/ScrollView.cs			\
+	UI/Styles.cs				\
+	UI/TextField.cs				\
 	$e
 
 RESGEN2		:= resgen2

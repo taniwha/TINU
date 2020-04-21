@@ -14,8 +14,8 @@ ZIP		:= zip
 
 .PHONY: all clean info install release
 
-#SUBDIRS=Assets Documentation GameData Source
-SUBDIRS=Source
+#SUBDIRS=Documentation GameData Source
+SUBDIRS=Assets Source
 
 all clean:
 	@for dir in ${SUBDIRS}; do \
