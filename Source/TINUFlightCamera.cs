@@ -242,14 +242,8 @@ public class TINUFlightCamera : FlightCamera
 		return b ? 1 : 0;
 	}
 
-	void CheckFlipKeys ()
+	void CheckModeKeys ()
 	{
-		bool reverse = Input.GetKey (KeyCode.RightControl);
-		Quaternion frame;
-		Quaternion target = transform.rotation;
-		Vector3 axis;
-		bool switchView = false;
-
 		if (Input.GetKeyDown (KeyCode.Keypad4)) {
 			SetMode (Modes.LOCKED);
 		} else if (Input.GetKeyDown (KeyCode.Keypad5)) {
@@ -261,6 +255,15 @@ public class TINUFlightCamera : FlightCamera
 		} else if (Input.GetKeyDown (KeyCode.Keypad2)) {
 			SetMode (Modes.AUTO);
 		}
+	}
+
+	void CheckFlipKeys ()
+	{
+		bool reverse = Input.GetKey (KeyCode.RightControl);
+		Quaternion frame;
+		Quaternion target = transform.rotation;
+		Vector3 axis;
+		bool switchView = false;
 
 		if (mode == Modes.LOCKED) {
 			frame = FlightGlobals.ActiveVessel.ReferenceTransform.rotation;
@@ -359,6 +362,7 @@ public class TINUFlightCamera : FlightCamera
 		offsetHdg = Mathf.Clamp (offsetHdg, -offsetClamp, offsetClamp);
 		offsetPitch = Mathf.Clamp (offsetPitch, -offsetClamp, offsetClamp);
 
+		CheckModeKeys ();
 		CheckFlipKeys ();
 	}
 
@@ -494,6 +498,13 @@ public class TINUFlightCamera : FlightCamera
 
 	protected override void LateUpdate ()
 	{
+		if (disableAll || disableMode[(int)mode]) {
+			if (HighLogic.LoadedSceneIsFlight) {
+				CheckModeKeys ();
+			}
+			base.LateUpdate ();
+			return;
+		}
 		if (!HighLogic.LoadedSceneIsFlight) {
 			return;
 		}
@@ -506,10 +517,6 @@ public class TINUFlightCamera : FlightCamera
 			|| (FlightDriver.Pause
 				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
 			HandleInput ();
-			if (disableAll || disableMode[(int)mode]) {
-				base.LateUpdate ();
-				return;
-			}
 		}
 		CalcReferenceVectors ();
 		if (updateReference) {
