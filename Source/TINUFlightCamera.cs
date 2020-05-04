@@ -513,11 +513,6 @@ public class TINUFlightCamera : FlightCamera
 			return;
 		}
 		Quaternion pivotRotation = cameraPivot.rotation;
-		if (InputLockManager.IsUnlocked(ControlTypes.CAMERACONTROLS)
-			|| (FlightDriver.Pause
-				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
-			HandleInput ();
-		}
 		CalcReferenceVectors ();
 		if (updateReference) {
 			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
@@ -528,12 +523,7 @@ public class TINUFlightCamera : FlightCamera
 			resetSecondaryReference = false;
 			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
 		}
-		if (setRotation) {
-			UpdateCameraTransform ();
-			cameraPivot.rotation = deltaRotation * pivotRotation;
-			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
-			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
-		} else if (autoRotate) {
+		if (autoRotate) {
 			Vector3 priVec = cameraPivot.TransformDirection (primaryReference);
 			var rot = fromtorot (priVec, primaryVector);
 			Vector3 secVec = rot * cameraPivot.TransformDirection (secondaryReference);
@@ -543,6 +533,18 @@ public class TINUFlightCamera : FlightCamera
 		} else {
 			UpdateCameraTransform ();
 			cameraPivot.rotation = pivotRotation;
+		}
+		if (InputLockManager.IsUnlocked(ControlTypes.CAMERACONTROLS)
+			|| (FlightDriver.Pause
+				&& !KSP.UI.UIMasterController.Instance.IsUIShowing)) {
+			HandleInput ();
+		}
+		if (setRotation) {
+			pivotRotation = cameraPivot.rotation;
+			cameraPivot.rotation = deltaRotation * pivotRotation;
+			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
+			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
+			UpdateCameraTransform ();
 		}
 		UpdateEVAFrame ();
 		UpdateEuler ();
