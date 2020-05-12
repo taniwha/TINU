@@ -211,6 +211,21 @@ namespace TINU {
 			GUILayout.EndHorizontal ();
 		}
 
+		void CurrentFoV ()
+		{
+			float fovMin = FlightCamera.fetch.fovMin;
+			float fovMax = FlightCamera.fetch.fovMax;
+			float fov = FlightCamera.fetch.FieldOfView;
+
+			GUILayout.Label ("Current FoV");
+			GUILayout.BeginHorizontal ();
+			fov = GUILayout.HorizontalSlider (fov, fovMin, fovMax,
+											  sliderStyle, sliderThumb);
+			FlightCamera.fetch.SetFoV(fov);
+			GUILayout.Label (fov.ToString ("N0"));
+			GUILayout.EndHorizontal ();
+		}
+
 		void DefaultFoV ()
 		{
 			float fovMin = FlightCamera.fetch.fovMin;
@@ -280,6 +295,7 @@ namespace TINU {
 			GUILayout.BeginVertical ();
 			InvertCamOffset ();
 			InvertCamKey ();
+			CurrentFoV ();
 			DefaultFoV ();
 			KeySensitivity ();
 			SphereScale ();
