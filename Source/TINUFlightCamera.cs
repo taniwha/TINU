@@ -322,6 +322,23 @@ public class TINUFlightCamera : FlightCamera
 		}
 	}
 
+	void CheckControlKeys ()
+	{
+		if (Input.GetKeyDown (KeyCode.KeypadDivide)) {
+			if (Input.GetKey (KeyCode.RightControl)) {
+				TINU_ConfigWindow.HideGUI ();
+				if (disableAll) {
+					disableAll = false;
+					disableMode[(int)mode] = false;
+				} else {
+					disableMode[(int)mode] = !disableMode[(int)mode];
+				}
+			} else {
+				TINU_ConfigWindow.ToggleGUI ();
+			}
+		}
+	}
+
 	void HandleInput ()
 	{
 		setRotation = false;
@@ -376,6 +393,7 @@ public class TINUFlightCamera : FlightCamera
 
 		CheckModeKeys ();
 		CheckFlipKeys ();
+		CheckControlKeys ();
 	}
 
 	void UpdateCameraAlt ()
@@ -513,6 +531,7 @@ public class TINUFlightCamera : FlightCamera
 		if (disableAll || disableMode[(int)mode]) {
 			if (HighLogic.LoadedSceneIsFlight) {
 				CheckModeKeys ();
+				CheckControlKeys ();
 			}
 			base.LateUpdate ();
 			return;

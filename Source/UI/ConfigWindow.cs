@@ -113,7 +113,7 @@ namespace TINU {
 
 		void UpdateGUIState ()
 		{
-			enabled = !hide_ui && gui_enabled;
+			enabled = (FlightDriver.Pause || !hide_ui) && gui_enabled;
 			if (!enabled) {
 				TINUFlightCamera.SaveSettings ();
 			}
