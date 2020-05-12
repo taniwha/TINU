@@ -36,6 +36,13 @@ public class TINUFlightCamera : FlightCamera
 			false,	// CHASE
 			false,	// LOCKED
 	};
+	public static Quaternion []savedRotation = {
+		Quaternion.identity,
+		Quaternion.identity,
+		Quaternion.identity,
+		Quaternion.identity,
+		Quaternion.identity,
+	};
 	public static bool invertKeyPitch = false;
 	public static bool invertKeyYaw = false;
 	public static bool invertCameraOffset = false;
@@ -68,6 +75,21 @@ public class TINUFlightCamera : FlightCamera
 		}
 	}
 
+	static void LoadRotations (ConfigNode n)
+	{
+		if (!n.HasNode ("frameRotations")) {
+			return;
+		}
+		ConfigNode rots = n.GetNode ("frameRotations");
+		var rotations = rots.GetValues ("rotation");
+		for (int i = 0; i < rotations.Length && i < savedRotation.Length; i++) {
+			Quaternion q;
+			if (ParseExtensions.TryParseQuaternion (rotations[i], out q)) {
+				savedRotation[i] = q;
+			}
+		}
+	}
+
 	static void LoadBool (ConfigNode n, string name, ref bool boolVal)
 	{
 		if (n.HasValue (name)) {
@@ -92,6 +114,7 @@ public class TINUFlightCamera : FlightCamera
 		foreach (ConfigNode n in node.nodes) {
 			if (n.name == "TINU_Settings") {
 				LoadDisable (n);
+				LoadRotations (n);
 				LoadBool (n, "invertCameraOffset", ref invertCameraOffset);
 				LoadBool (n, "invertKeyPitch", ref invertKeyPitch);
 				LoadBool (n, "invertKeyYaw", ref invertKeyYaw);
@@ -112,6 +135,14 @@ public class TINUFlightCamera : FlightCamera
 		node.AddValue ("disable", ConfigNode.WriteBoolArray (flags));
 	}
 
+	static void SaveRotations (ConfigNode node)
+	{
+		ConfigNode rots = node.AddNode ("frameRotations");
+		for (int i = 0; i < savedRotation.Length; i++) {
+			rots.AddValue ("rotation", savedRotation[i]);
+		}
+	}
+
 	public static void SaveSettings ()
 	{
 		string filePath = DataPath + "/" + "settings.cfg";
@@ -119,6 +150,7 @@ public class TINUFlightCamera : FlightCamera
 
 		var settings = new ConfigNode ("TINU_Settings");
 		SaveDisable (settings);
+		SaveRotations (settings);
 		settings.AddValue ("invertCameraOffset", invertCameraOffset);
 		settings.AddValue ("invertKeyPitch", invertKeyPitch);
 		settings.AddValue ("invertKeyYaw", invertKeyYaw);
@@ -283,6 +315,15 @@ public class TINUFlightCamera : FlightCamera
 				target = frame * new Quaternion (1, 0, 0, 0);
 			} else {
 				target = frame;
+			}
+		} else if (Input.GetKeyDown (KeyCode.Keypad0)) {
+			if (reverse) {
+				// right-contol is held, so save the current frame-relative
+				// orientation
+				savedRotation[(int)mode] = Quaternion.Inverse (frame) * transform.rotation;
+			} else {
+				switchView = true;
+				target = frame * savedRotation[(int)mode];
 			}
 		} else if (Input.GetKeyDown (KeyCode.Keypad1)) {
 			switchView = true;
