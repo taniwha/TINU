@@ -36,6 +36,8 @@ public class TINUFlightCamera : FlightCamera
 			false,	// CHASE
 			false,	// LOCKED
 	};
+	public static bool invertKeyPitch = false;
+	public static bool invertKeyYaw = false;
 	public static bool invertCameraOffset = false;
 	public static float cameraKeySensitivity = 1;
 	public static float sphereScale = 1;
@@ -91,6 +93,8 @@ public class TINUFlightCamera : FlightCamera
 			if (n.name == "TINU_Settings") {
 				LoadDisable (n);
 				LoadBool (n, "invertCameraOffset", ref invertCameraOffset);
+				LoadBool (n, "invertKeyPitch", ref invertKeyPitch);
+				LoadBool (n, "invertKeyYaw", ref invertKeyYaw);
 				LoadFloat (n, "cameraKeySensitivity", ref cameraKeySensitivity);
 				LoadFloat (n, "fovDefault", ref fetch.fovDefault);
 				LoadFloat (n, "sphereScale", ref sphereScale);
@@ -116,6 +120,8 @@ public class TINUFlightCamera : FlightCamera
 		var settings = new ConfigNode ("TINU_Settings");
 		SaveDisable (settings);
 		settings.AddValue ("invertCameraOffset", invertCameraOffset);
+		settings.AddValue ("invertKeyPitch", invertKeyPitch);
+		settings.AddValue ("invertKeyYaw", invertKeyYaw);
 		settings.AddValue ("cameraKeySensitivity", cameraKeySensitivity);
 		settings.AddValue ("fovDefault", fetch.fovDefault);
 		settings.AddValue ("sphereScale", sphereScale);
@@ -337,6 +343,12 @@ public class TINUFlightCamera : FlightCamera
 							  - conv (GameSettings.CAMERA_ORBIT_UP.GetKey ()),
 							  conv (GameSettings.CAMERA_ORBIT_LEFT.GetKey ())
 							  - conv (GameSettings.CAMERA_ORBIT_RIGHT.GetKey ()));
+		if (invertKeyPitch) {
+			py.x = -py.x;
+		}
+		if (invertKeyYaw) {
+			py.y = -py.y;
+		}
 		py *= Time.unscaledDeltaTime;
 		py.x += GameSettings.AXIS_CAMERA_PITCH.GetAxis () * orbitSensitivity;
 		py.y += GameSettings.AXIS_CAMERA_HDG.GetAxis () * orbitSensitivity;

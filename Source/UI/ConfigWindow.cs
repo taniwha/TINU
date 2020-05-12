@@ -189,8 +189,26 @@ namespace TINU {
 
 		void InvertCamOffset ()
 		{
+			GUILayout.BeginHorizontal ();
 			GUILayout.Label ("Camera Offset");
+			GUILayout.FlexibleSpace ();
 			ToggleBool (ref TINUFlightCamera.invertCameraOffset, "Invert");
+			GUILayout.EndHorizontal ();
+		}
+
+		void InvertCamKey ()
+		{
+			GUILayout.BeginHorizontal ();
+			GUILayout.Label ("Camera Pitch");
+			GUILayout.FlexibleSpace ();
+			ToggleBool (ref TINUFlightCamera.invertKeyPitch, "Invert");
+			GUILayout.EndHorizontal ();
+
+			GUILayout.BeginHorizontal ();
+			GUILayout.Label ("Camera Yaw");
+			GUILayout.FlexibleSpace ();
+			ToggleBool (ref TINUFlightCamera.invertKeyYaw, "Invert");
+			GUILayout.EndHorizontal ();
 		}
 
 		void DefaultFoV ()
@@ -261,6 +279,7 @@ namespace TINU {
 			DisableOptions ();
 			GUILayout.BeginVertical ();
 			InvertCamOffset ();
+			InvertCamKey ();
 			DefaultFoV ();
 			KeySensitivity ();
 			SphereScale ();
