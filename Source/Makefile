@@ -5,7 +5,7 @@ export GAMEDATA		:= ${KSPDIR}/GameData
 export MODGAMEDATA	:= ${GAMEDATA}/${MODNAME}
 export PLUGINDIR	:= ${MODGAMEDATA}/Plugins
 
-TARGETS		:= bin/TINU.dll
+TARGETS		:= TINU.dll
 
 TINU_FILES := \
 	assembly/AssemblyInfo.cs	\
@@ -20,8 +20,8 @@ TINU_FILES := \
 	$e
 
 RESGEN2		:= resgen2
-GMCS		:= mcs
-GMCSFLAGS	:= -optimize -warnaserror -debug
+CSC			:= csc
+CSCFLAGS	:= -highentropyva- -noconfig -nostdlib+ -t:library -optimize -optimize -debug -warnaserror
 GIT			:= git
 TAR			:= tar
 ZIP			:= zip
@@ -42,27 +42,36 @@ info:
 	@echo "    zip:        ${ZIP}"
 	@echo "    KSP Data:   ${KSPDIR}"
 
-bin/TINU.dll: ${TINU_FILES}
-	@mkdir -p bin
-	${GMCS} ${GMCSFLAGS} -t:library -lib:${MANAGED} \
-		-r:Assembly-CSharp,Assembly-CSharp-firstpass \
-		-r:UnityEngine \
-		-r:UnityEngine.UI \
-		-r:UnityEngine.UIModule \
-		-r:UnityEngine.IMGUIModule \
-		-r:UnityEngine.TextRenderingModule \
-		-r:UnityEngine.AnimationModule \
-		-r:UnityEngine.CoreModule \
-		-r:UnityEngine.PhysicsModule \
-		-r:UnityEngine.InputLegacyModule \
-		-out:$@ $^
+SYSTEM := \
+	-lib:${MANAGED} \
+	-r:${MANAGED}/mscorlib.dll \
+	-r:${MANAGED}/System.dll \
+	-r:${MANAGED}/System.Core.dll
+
+KSP := \
+	-r:Assembly-CSharp.dll \
+	-r:Assembly-CSharp-firstpass.dll
+
+UNITY := \
+	-r:UnityEngine.dll \
+	-r:UnityEngine.UI.dll \
+	-r:UnityEngine.UIModule.dll \
+	-r:UnityEngine.IMGUIModule.dll \
+	-r:UnityEngine.TextRenderingModule.dll \
+	-r:UnityEngine.AnimationModule.dll \
+	-r:UnityEngine.CoreModule.dll \
+	-r:UnityEngine.PhysicsModule.dll \
+	-r:UnityEngine.InputLegacyModule.dll \
+	$e
+
+TINU.dll: ${TINU_FILES}
+	${CSC} ${CSCFLAGS} ${SYSTEM} ${KSP} ${UNITY} -out:$@ $^
 
 clean:
-	rm -f ${TARGETS}* assembly/AssemblyInfo.cs bin/${MODNAME}.version
-	test -d bin && rmdir bin || true
+	rm -f ${TARGETS}* assembly/AssemblyInfo.cs ${MODNAME}.version
 
 install: all
 	mkdir -p ${PLUGINDIR}
-	cp ${TARGETS} bin/${MODNAME}.version ${PLUGINDIR}
+	cp ${TARGETS} ${MODNAME}.version ${PLUGINDIR}
 
 .PHONY: all clean install

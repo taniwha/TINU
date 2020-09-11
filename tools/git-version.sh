@@ -27,8 +27,7 @@ KSPMAJOR=$2
 KSPMINOR=$3
 KSPPATCH=$4
 
-mkdir -p bin
-cat > bin/${MODNAME}.version <<EOF
+cat > ${MODNAME}.version <<EOF
 {
 	"NAME":"${MODNAME}",
 	"URL":"http://taniwha.org/~bill/${MODNAME}.version",

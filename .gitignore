@@ -1,6 +1,7 @@
 .DS_Store
 *.dll
-*.dll.mdb
+*.mdb
+*.pdb
 *.orig
 *.userprefs
 *.suo
