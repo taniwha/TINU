@@ -187,6 +187,8 @@ public class TINUFlightCamera : FlightCamera
 		updateReference = true;
 	}
 
+	TINUCameraState vesselCamera;
+
 	enum SecondaryAxis {
 		None,		// no axis set
 		X, Y, Z,	// world reference frame (backup)
@@ -620,6 +622,9 @@ public class TINUFlightCamera : FlightCamera
 		}
 		UpdateEVAFrame ();
 		UpdateEuler ();
+		if (vesselCamera != null) {
+			vesselCamera.Rotation = cameraPivot.localRotation;
+		}
 	}
 
 	protected override void UpdateCameraTransform ()
@@ -631,6 +636,39 @@ public class TINUFlightCamera : FlightCamera
 			updateFoR (cameraPivot.rotation, FoRlerp);
 		}
 		base.UpdateCameraTransform ();
+	}
+
+	void FindVesselCameraState (Vessel vessel)
+	{
+		vesselCamera = null;
+		for (int i = 0; i < vessel.vesselModules.Count; i++) {
+			if (vessel.vesselModules[i] is TINUCameraState) {
+				vesselCamera = vessel.vesselModules[i] as TINUCameraState;
+				break;
+			}
+		}
+	}
+
+	public override void SetTargetVessel (Vessel vessel)
+	{
+		if (vessel != null) {
+			FindVesselCameraState (vessel);
+		}
+		base.SetTargetVessel (vessel);
+		if (vesselCamera != null) {
+			cameraPivot.localRotation = vesselCamera.Rotation;
+		}
+	}
+
+	public override void SetTargetPart (Part part)
+	{
+		if (part != null && part.vessel != null) {
+			FindVesselCameraState (part.vessel);
+		}
+		base.SetTargetPart (part);
+		if (vesselCamera != null) {
+			cameraPivot.localRotation = vesselCamera.Rotation;
+		}
 	}
 }
 

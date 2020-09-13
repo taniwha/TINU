@@ -10,6 +10,7 @@ TARGETS		:= TINU.dll
 TINU_FILES := \
 	assembly/AssemblyInfo.cs	\
 	assembly/VersionReport.cs	\
+	CameraState.cs				\
 	FlightCameraOverride.cs		\
 	TINUFlightCamera.cs			\
 	Toolbar.cs					\
