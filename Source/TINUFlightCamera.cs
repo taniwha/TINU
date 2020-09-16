@@ -624,6 +624,7 @@ public class TINUFlightCamera : FlightCamera
 		UpdateEuler ();
 		if (vesselCamera != null) {
 			vesselCamera.Rotation = cameraPivot.localRotation;
+			vesselCamera.Distance = Distance;
 		}
 	}
 
@@ -657,6 +658,7 @@ public class TINUFlightCamera : FlightCamera
 		base.SetTargetVessel (vessel);
 		if (vesselCamera != null) {
 			cameraPivot.localRotation = vesselCamera.Rotation;
+			SetDistanceImmediate (vesselCamera.Distance);
 		}
 	}
 
