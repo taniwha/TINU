@@ -18,6 +18,7 @@ along with TINU.  If not, see
 using System;
 using System.IO;
 using System.Reflection;
+using System.Collections;
 using UnityEngine;
 
 namespace TINU {
@@ -73,6 +74,7 @@ public class TINUFlightCamera : FlightCamera
 
 		DataPath = AssemblyLoader.loadedAssemblies.GetPathByType (typeof (TINUFlightCamera));
 		LoadSettings ();
+		MapView.OnExitMapView += OnExitMapView;
 	}
 
 	static void LoadDisable (ConfigNode n)
@@ -179,12 +181,24 @@ public class TINUFlightCamera : FlightCamera
 
 	protected override void Start ()
 	{
+		base.Start ();
 		cameraPivot = transform.parent;
+	}
+
+	protected override IEnumerator Startup ()
+	{
+		var baseStartup = base.Startup ();
+
+		while (baseStartup.MoveNext ()) {
+			yield return baseStartup.Current;
+		}
+		flightDistance = Distance;
 	}
 
 	protected override void OnDestroy ()
 	{
 		base.OnDestroy ();
+		MapView.OnExitMapView -= OnExitMapView;
 		GameEvents.onVesselSOIChanged.Remove (onVesselSOIChanged);
 		GameEvents.onVesselChange.Remove (onVesselChange);
 		GameEvents.onHideUI.Remove (onHideUI);
@@ -284,13 +298,22 @@ public class TINUFlightCamera : FlightCamera
 		setRotation = true;
 	}
 
+	// keep track of the flight view distance because map view tramples it
+	float flightDistance;
+
 	public void UpdateZoomFov(float delta)
 	{
 		if (GameSettings.MODIFIER_KEY.GetKey ()) {
 			SetFoV (Mathf.Clamp (FieldOfView + delta * 5, fovMin, fovMax));
 		} else {
-			SetDistance ((1 - delta) * Distance);
+			flightDistance = (1 - delta) * Distance;
+			SetDistance (flightDistance);
 		}
+	}
+
+	void OnExitMapView ()
+	{
+		SetDistance (flightDistance);
 	}
 
 	float conv (bool b)
