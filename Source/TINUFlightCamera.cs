@@ -51,11 +51,25 @@ public class TINUFlightCamera : FlightCamera
 
 	public static string DataPath { get; private set; }
 
+	bool uiHidden;
+
+	void onHideUI ()
+	{
+		uiHidden = true;
+	}
+
+	void onShowUI ()
+	{
+		uiHidden = false;
+	}
+
 	protected override void Awake ()
 	{
 		base.Awake ();
 		GameEvents.onVesselSOIChanged.Add (onVesselSOIChanged);
 		GameEvents.onVesselChange.Add (onVesselChange);
+		GameEvents.onHideUI.Add (onHideUI);
+		GameEvents.onShowUI.Add (onShowUI);
 
 		DataPath = AssemblyLoader.loadedAssemblies.GetPathByType (typeof (TINUFlightCamera));
 		LoadSettings ();
@@ -173,6 +187,8 @@ public class TINUFlightCamera : FlightCamera
 		base.OnDestroy ();
 		GameEvents.onVesselSOIChanged.Remove (onVesselSOIChanged);
 		GameEvents.onVesselChange.Remove (onVesselChange);
+		GameEvents.onHideUI.Remove (onHideUI);
+		GameEvents.onShowUI.Remove (onShowUI);
 	}
 
 	void onVesselSOIChanged (GameEvents.HostedFromToAction<Vessel, CelestialBody> a)
@@ -390,7 +406,7 @@ public class TINUFlightCamera : FlightCamera
 		}
 		float wheel = GameSettings.AXIS_MOUSEWHEEL.GetAxis ();
 		var eventSystem = UnityEngine.EventSystems.EventSystem.current;
-		if (wheel != 0 && !eventSystem.IsPointerOverGameObject ()) {
+		if (wheel != 0 && (uiHidden || !eventSystem.IsPointerOverGameObject ())) {
 			UpdateZoomFov (wheel);
 		}
 		float key = (conv (GameSettings.ZOOM_IN.GetKey ())
