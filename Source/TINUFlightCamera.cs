@@ -639,7 +639,13 @@ public class TINUFlightCamera : FlightCamera
 		UpdateEVAFrame ();
 		UpdateEuler ();
 		if (vesselCamera != null) {
-			vesselCamera.Rotation = cameraPivot.localRotation;
+			if (cameraPivot.parent != vesselCamera.Vessel.transform) {
+				var vesselTransform = vesselCamera.Vessel.transform;
+				var v = Quaternion.Inverse (vesselTransform.rotation);
+				vesselCamera.Rotation = v * cameraPivot.rotation;
+			} else {
+				vesselCamera.Rotation = cameraPivot.localRotation;
+			}
 			vesselCamera.Distance = Distance;
 		}
 	}
