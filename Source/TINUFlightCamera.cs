@@ -161,6 +161,9 @@ public class TINUFlightCamera : FlightCamera
 
 	public static void SaveSettings ()
 	{
+		if (fetch == null) {
+			return;
+		}
 		string filePath = DataPath + "/" + "settings.cfg";
 		Directory.CreateDirectory (DataPath);
 
