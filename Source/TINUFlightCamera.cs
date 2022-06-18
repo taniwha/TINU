@@ -66,6 +66,7 @@ public class TINUFlightCamera : FlightCamera
 
 	protected override void Awake ()
 	{
+		FlightCameraOverride.SetAudioListener (this);
 		base.Awake ();
 		GameEvents.onVesselSOIChanged.Add (onVesselSOIChanged);
 		GameEvents.onVesselChange.Add (onVesselChange);
@@ -161,7 +162,7 @@ public class TINUFlightCamera : FlightCamera
 
 	public static void SaveSettings ()
 	{
-		if (fetch == null) {
+		if (fetch == null || DataPath == null) {
 			return;
 		}
 		string filePath = DataPath + "/" + "settings.cfg";
