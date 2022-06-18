@@ -37,6 +37,16 @@ public class FlightCameraOverride : MonoBehaviour
 		GameEvents.onLevelWasLoadedGUIReady.Remove (onLevelWasLoadedGUIReady);
 	}
 
+	static FieldInfo audioListener_field;
+	static GameObject audioListener;
+
+	internal static void SetAudioListener (TINUFlightCamera tinuCamera)
+	{
+		if (audioListener_field != null) {
+			audioListener_field.SetValue (tinuCamera, audioListener);
+		}
+	}
+
 	void onLevelWasLoadedGUIReady (GameScenes scene)
 	{
 		if (scene != GameScenes.PSYSTEM) {
@@ -51,6 +61,12 @@ public class FlightCameraOverride : MonoBehaviour
 
 		FlightCamera stockCamera = FlightCamera.fetch;
 		GameObject scGameObject = stockCamera.gameObject;
+		foreach (var field in fcFields) {
+			if (field.Name == "AudioListenerGameObject") {
+				audioListener_field = field;
+				audioListener = (GameObject) field.GetValue (stockCamera);
+			}
+		}
 		FlightCamera.fetch = null;
 		var tinuCamera = scGameObject.AddComponent<TINUFlightCamera>();
 
