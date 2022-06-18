@@ -247,12 +247,28 @@ namespace TINU {
 			float senseMax = 2;
 			float sense = TINUFlightCamera.cameraKeySensitivity;
 
-			GUILayout.Label ("Sensitivity");
+			GUILayout.Label ("Key Sensitivity");
 			GUILayout.BeginHorizontal ();
 			sense = GUILayout.HorizontalSlider (sense, senseMin, senseMax,
 											    sliderStyle, sliderThumb);
 			sense = Mathf.Floor (sense * 10) / 10;
 			TINUFlightCamera.cameraKeySensitivity = sense;
+			GUILayout.Label (sense.ToString ("N1"));
+			GUILayout.EndHorizontal ();
+		}
+
+		void MouseSensitivity ()
+		{
+			float senseMin = 0.2f;
+			float senseMax = 2;
+			float sense = TINUFlightCamera.cameraMouseSensitivity;
+
+			GUILayout.Label ("Mouse Sensitivity");
+			GUILayout.BeginHorizontal ();
+			sense = GUILayout.HorizontalSlider (sense, senseMin, senseMax,
+											    sliderStyle, sliderThumb);
+			sense = Mathf.Floor (sense * 10) / 10;
+			TINUFlightCamera.cameraMouseSensitivity = sense;
 			GUILayout.Label (sense.ToString ("N1"));
 			GUILayout.EndHorizontal ();
 		}
@@ -298,6 +314,7 @@ namespace TINU {
 			CurrentFoV ();
 			DefaultFoV ();
 			KeySensitivity ();
+			MouseSensitivity ();
 			SphereScale ();
 			GUILayout.EndVertical ();
 

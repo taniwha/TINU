@@ -48,6 +48,7 @@ public class TINUFlightCamera : FlightCamera
 	public static bool invertKeyYaw = false;
 	public static bool invertCameraOffset = false;
 	public static float cameraKeySensitivity = 1;
+	public static float cameraMouseSensitivity = 1;
 	public static float sphereScale = 1;
 
 	public static string DataPath { get; private set; }
@@ -136,6 +137,7 @@ public class TINUFlightCamera : FlightCamera
 				LoadBool (n, "invertKeyPitch", ref invertKeyPitch);
 				LoadBool (n, "invertKeyYaw", ref invertKeyYaw);
 				LoadFloat (n, "cameraKeySensitivity", ref cameraKeySensitivity);
+				LoadFloat (n, "cameraMouseSensitivity", ref cameraMouseSensitivity);
 				LoadFloat (n, "fovDefault", ref fetch.fovDefault);
 				LoadFloat (n, "sphereScale", ref sphereScale);
 			}
@@ -175,6 +177,7 @@ public class TINUFlightCamera : FlightCamera
 		settings.AddValue ("invertKeyPitch", invertKeyPitch);
 		settings.AddValue ("invertKeyYaw", invertKeyYaw);
 		settings.AddValue ("cameraKeySensitivity", cameraKeySensitivity);
+		settings.AddValue ("cameraMouseSensitivity", cameraMouseSensitivity);
 		settings.AddValue ("fovDefault", fetch.fovDefault);
 		settings.AddValue ("sphereScale", sphereScale);
 
@@ -288,7 +291,7 @@ public class TINUFlightCamera : FlightCamera
 		end = TrackballVector (end);
 		start = TrackballVector (start);
 		Vector3 axis = transform.TransformDirection(Vector3.Cross(start, end));
-		float angle = delta.magnitude / (2 * r) * 60;
+		float angle = delta.magnitude / (2 * r) * 60 * cameraMouseSensitivity;
 		deltaRotation = Quaternion.AngleAxis (angle, axis);
 		setRotation = true;
 	}
