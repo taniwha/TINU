@@ -231,6 +231,7 @@ public class TINUFlightCamera : FlightCamera
 		X, Y, Z,	// world reference frame (backup)
 		Velocity,
 		InVector,
+		Target,
 	}
 
 	Vector3 primaryReference;
@@ -238,6 +239,7 @@ public class TINUFlightCamera : FlightCamera
 	Vector3 primaryVector;
 	Vector3 secondaryVector;
 	SecondaryAxis secondaryAxis;
+	Modes curMode = Modes.AUTO;
 
 	Quaternion deltaRotation;
 	Quaternion evaFoR;
@@ -526,13 +528,41 @@ public class TINUFlightCamera : FlightCamera
 		return Vector3.Dot (vector, vector) > secondaryEpsilon;
 	}
 
+	bool IsInOrbit (Vessel v)
+	{
+		if (v.orbit.eccentricity < 1) {
+			double PeA = v.orbit.PeA;
+			if (PeA <= 0) {
+				// very definitly not in orbit, FREE works quite well,
+				// especially for atmospheric flight
+			} else {
+				double PePressure = FlightGlobals.getStaticPressure (PeA);
+				double kPaToAtm = PhysicsGlobals.KpaToAtmospheres;
+				if (PePressure * kPaToAtm >= 0.01f) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	Vector3 RadialVector (Vessel v)
+	{
+		return v.mainBody.transform.position - v.transform.position;
+	}
+
+	Vector3 TargetVector (Vessel v)
+	{
+		Transform t = v.targetObject.GetTransform ();
+		return t.position - v.transform.position;
+	}
+
 	void CalcReferenceVectors ()
 	{
 		SecondaryAxis sAxis = SecondaryAxis.None;
 
 		Modes pm = mode;
 		Modes sm = mode;
-		Vector3 cbDir;
 		Vessel v = FlightGlobals.ActiveVessel;
 		bool frameLock = false;
 
@@ -540,14 +570,31 @@ public class TINUFlightCamera : FlightCamera
 			pm = autoMode;
 			sm = autoMode;
 		} else if (pm == Modes.CHASE) {
-			pm = GetAutoModeForVessel (v);
+			if (v.targetObject == null) {
+				pm = autoMode;
+			}
+			sm = autoMode;
 		}
 
-		cbDir = v.mainBody.transform.position - v.transform.position;
 		switch (pm) {
-			case Modes.FREE:
-				primaryVector = cbDir;
+			case Modes.CHASE:
+				// v.targetObject is known to not be null due to test above
+				// otherwise pm would not be CHASE
 				autoRotate = true;
+				if (sm == Modes.ORBITAL) {
+					frameLock = true;
+					primaryVector = TargetVector (v);
+				} else /* pm == Modes.FREE */ {
+					primaryVector = RadialVector (v);
+					secondaryVector = TargetVector (v);
+					sAxis = SecondaryAxis.Target;
+				}
+				break;
+			case Modes.FREE:
+				autoRotate = true;
+				primaryVector = RadialVector (v);
+				secondaryVector = v.srf_velocity;
+				sAxis = SecondaryAxis.Velocity;
 				break;
 			case Modes.LOCKED:
 				autoRotate = false;
@@ -562,13 +609,9 @@ public class TINUFlightCamera : FlightCamera
 		// the vessel's orientation and oribtal uses frame lock (FIXME would
 		// be nice for orbital to use star lock, but that takes messing with
 		// the rotating reference frame when below certain altitudes)
-		if (sm == Modes.FREE || sm == Modes.CHASE) {
-			secondaryVector = v.srf_velocity;
-			if (sm == Modes.CHASE && v.targetObject != null) {
-				Transform t = v.targetObject.GetTransform ();
-				secondaryVector = t.position - v.transform.position;
-			}
-			sAxis = SecondaryAxis.Velocity;
+		// chase may or may not use a secondary vector, but free always uses
+		// one
+		if (sAxis != SecondaryAxis.None) {
 			frameLock = !ProjectVector (primaryVector, ref secondaryVector);
 		}
 		if (frameLock) {
@@ -634,6 +677,10 @@ public class TINUFlightCamera : FlightCamera
 		}
 		Quaternion pivotRotation = cameraPivot.rotation;
 		CalcReferenceVectors ();
+		if (curMode != mode) {
+			curMode = mode;
+			updateReference = true;
+		}
 		if (updateReference) {
 			primaryReference = cameraPivot.InverseTransformDirection (primaryVector);
 			secondaryReference = cameraPivot.InverseTransformDirection (secondaryVector);
